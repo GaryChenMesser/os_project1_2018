@@ -1,5 +1,0 @@
-1. recheck the cpu and scheduler's setting
-
-gcc main_v2.c mysched.c -o sched.out -pthread
-gcc main_v3.c mysched.c -o sched.out -pthread
-
