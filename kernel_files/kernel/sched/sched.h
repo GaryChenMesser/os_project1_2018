@@ -143,13 +143,29 @@ static inline int dl_policy(int policy)
 static inline bool valid_policy(int policy)
 {
 	return idle_policy(policy) || fair_policy(policy) ||
-		rt_policy(policy) || dl_policy(policy);
+		rt_policy(policy) || dl_policy(policy) || 
+		/* OS project 1  */
+		psjf_policy(policy);
 }
 
 static inline int task_has_rt_policy(struct task_struct *p)
 {
 	return rt_policy(p->policy);
 }
+
+/* OS project 1  */
+static inline int psjf_policy(int policy)
+{
+	if(unlikely(policy == SCHED_PSJF))
+		return 1;
+	return 0;
+}
+/* OS project 1  */
+static inline int task_has_psjf_policy(struct task_struct *p)
+{
+	return psjf_policy(p->policy);
+}
+
 
 static inline int task_has_dl_policy(struct task_struct *p)
 {
@@ -506,6 +522,13 @@ static inline int rt_bandwidth_enabled(void)
 # define HAVE_RT_PUSH_IPI
 #endif
 
+/* OS project 1  */
+struct psjf_rq {
+	struct list_head queue;
+	unsigned long nr_running;
+	struct list_head * psjf_load_balance_head, * psjf_load_balance_curr;
+};
+
 /* Real-Time classes' related field in a runqueue: */
 struct rt_rq {
 	struct rt_prio_array active;
@@ -708,6 +731,8 @@ struct rq {
 	struct cfs_rq cfs;
 	struct rt_rq rt;
 	struct dl_rq dl;
+	/* OS project 1  */
+	struct  psjf_rq  psjf;
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	/* list of leaf cfs_rq on this cpu: */

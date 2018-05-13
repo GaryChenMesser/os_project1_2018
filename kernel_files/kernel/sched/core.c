@@ -2390,6 +2390,11 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	 * so use __set_task_cpu().
 	 */
 	__set_task_cpu(p, cpu);
+
+	/* OS project 1  */
+	if (!rt_prio(p->prio) && (p->sched_class != &psjf_sched_class))
+		p->sched_class = &fair_sched_class;
+
 	if (p->sched_class->task_fork)
 		p->sched_class->task_fork(p);
 	raw_spin_unlock_irqrestore(&p->pi_lock, flags);
@@ -3744,7 +3749,11 @@ void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task)
 			p->dl.dl_boosted = 0;
 		if (rt_prio(oldprio))
 			p->rt.timeout = 0;
-		p->sched_class = &fair_sched_class;
+		/* OS project 1  */
+		if (prev_class == &psjf_sched_class)
+			p->sched_class = &psjf_sched_class;
+		else
+			p->sched_class = &fair_sched_class;
 	}
 
 	p->prio = prio;
@@ -3982,6 +3991,9 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
+	/* OS project 1  */
+	else if(p->policy == SCHED_PSJF)
+		p->sched_class = &psjf_sched_class;
 	else
 		p->sched_class = &fair_sched_class;
 }
@@ -5053,6 +5065,11 @@ SYSCALL_DEFINE1(sched_get_priority_max, int, policy)
 	case SCHED_DEADLINE:
 	case SCHED_NORMAL:
 	case SCHED_BATCH:
+	/* OS project 1  */
+	case SCHED_PSJF:
+		ret = 0; // not sure
+		break;
+	}
 	case SCHED_IDLE:
 		ret = 0;
 		break;
@@ -5868,6 +5885,8 @@ void __init sched_init(void)
 		init_cfs_rq(&rq->cfs);
 		init_rt_rq(&rq->rt);
 		init_dl_rq(&rq->dl);
+		/* OS project 1  */
+		init_psjf_rq(&rq->dl);
 #ifdef CONFIG_FAIR_GROUP_SCHED
 		root_task_group.shares = ROOT_TASK_GROUP_LOAD;
 		INIT_LIST_HEAD(&rq->leaf_cfs_rq_list);

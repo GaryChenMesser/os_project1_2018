@@ -944,4 +944,8 @@ asmlinkage void sys_print(char p[], struct timespec * start,
                           struct timespec * end);
 asmlinkage void sys_gettime(struct timespec * ts);
 
+/* OS project 1  */
+asmlinkage long sys_sched_psjf_getquantum(void);
+asmlinkage long sys_sched_psjf_setquantum(unsigned int quantum);
+
 #endif
