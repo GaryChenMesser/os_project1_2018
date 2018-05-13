@@ -941,4 +941,8 @@ asmlinkage long sys_pkey_free(int pkey);
 asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
 			  unsigned mask, struct statx __user *buffer);
 
+/* OS project 1  */
+asmlinkage long sys_sched_psjf_getquantum(void);
+asmlinkage long sys_sched_psjf_setquantum(unsigned int quantum);
+
 #endif

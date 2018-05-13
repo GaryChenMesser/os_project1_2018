@@ -9279,6 +9279,11 @@ void init_cfs_rq(struct cfs_rq *cfs_rq)
 #endif
 }
 
+/* OS project 1  */
+static void init_psjf_rq(struct psjf_rq * psjf_rq){
+	INIT_LIST_HEAD(&psjf_rq->queue);
+}
+
 #ifdef CONFIG_FAIR_GROUP_SCHED
 static void task_set_group_fair(struct task_struct *p)
 {
@@ -9518,7 +9523,8 @@ static unsigned int get_rr_interval_fair(struct rq *rq, struct task_struct *task
  * All the scheduling class methods:
  */
 const struct sched_class fair_sched_class = {
-	.next			= &idle_sched_class,
+	/* OS project 1  */
+	.next			= &psjf_sched_class,
 	.enqueue_task		= enqueue_task_fair,
 	.dequeue_task		= dequeue_task_fair,
 	.yield_task		= yield_task_fair,

@@ -562,6 +562,8 @@ struct task_struct {
 	const struct sched_class	*sched_class;
 	struct sched_entity		se;
 	struct sched_rt_entity		rt;
+	/* OS project 1  */
+	struct list_head psjf_list_item;
 #ifdef CONFIG_CGROUP_SCHED
 	struct task_group		*sched_task_group;
 #endif
@@ -579,6 +581,10 @@ struct task_struct {
 	unsigned int			policy;
 	int				nr_cpus_allowed;
 	cpumask_t			cpus_allowed;
+	/* OS project 1  */
+	unsigned int task_time_slice;
+	/* OS project 1  */
+	unsigned int psjf_time_slice;
 
 #ifdef CONFIG_PREEMPT_RCU
 	int				rcu_read_lock_nesting;
