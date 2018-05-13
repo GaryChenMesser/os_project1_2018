@@ -94,7 +94,8 @@ int main(){
 	pid_t pid;
 	unsigned long local_clock = 0;
 	unsigned long i = 0;
-	struct timespec start, end;
+	struct timeval start, end;
+	struct timezone zone;
 	
 	for(0; i < N; ++i){
 		while(local_clock != R[i]){
@@ -103,10 +104,11 @@ int main(){
 		}
 		
 		printf("%s forks!\n", P[R_index[i]]);
-		getnstimeofday(&start);
+		gettimeofday(&start, &zone);
 		pid = fork();
 		if(!pid){
 			// restrict to one cpu usage
+			printf("%s %d\n", P[R_index[i]], getpid());
 			if(sched_setaffinity(0, sizeof(cpu_set_t), &mask)){
 				printf("sched_setaffinity error: %s\n", strerror(errno));
 				exit(1);
@@ -122,15 +124,20 @@ int main(){
 	goto PARENT;
 	
 CHILD:
-	wait_unit(T[T_inverse[R_index[i]]]);
-	getnstimeofday(&end);
-	printk("[Project1] %s %.9f %.9f", P[R_index[i]], start.tv_sec + start.tv_nsec / 10^9, end.tv_sec + end.tv_nsec / 10^9);
+	//printf("%s runs!\n", P[R_index[i]]);
+	for(unsigned long _i = 0; _i < T[T_inverse[R_index[i]]]; ++_i){
+		wait_one_unit;
+		//printf("%s runs %d!\n", P[R_index[i]], _i);
+	}
+	//wait_unit(T[T_inverse[R_index[i]]]);
+	//gettimeofday(&end, &zone);
+	//printk("[Project1] %s %.9f %.9f", P[R_index[i]], start.tv_sec + start.tv_usec / 10^6, end.tv_sec + end.tv_usec / 10^6);
 	printf("%s terminates!\n", P[R_index[i]]);
+	syscall(334, P[R_index[i]], start, end);
 	exit(0);
 	
 PARENT:
 	while(wait(NULL) > 0);
-	
 	
 	sem_unlink("/mymutex");
 	sem_unlink("/mywrt");
