@@ -5047,6 +5047,9 @@ SYSCALL_DEFINE1(sched_get_priority_max, int, policy)
 
 	switch (policy) {
 	case SCHED_FIFO:
+	// OS Project 1
+	case SCHED_SJF:
+	case SCHED_PSJF:	
 	case SCHED_RR:
 		ret = MAX_USER_RT_PRIO-1;
 		break;
@@ -5074,6 +5077,9 @@ SYSCALL_DEFINE1(sched_get_priority_min, int, policy)
 
 	switch (policy) {
 	case SCHED_FIFO:
+	// OS Project 1
+	case SCHED_SJF:
+	case SCHED_PSJF:	
 	case SCHED_RR:
 		ret = 1;
 		break;
