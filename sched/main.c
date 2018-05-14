@@ -195,7 +195,7 @@ int main(){
 		}
 	}
 	
-	// wait until the first child to be forked
+	// after all children have been forked, consume the remaining children which are still in idle.
 	while(!list_empty(&ready.list) && (S[0] == 'S' || S[0] == 'P')){
 		tmp = list_entry(ready.list.next, struct ready_queue, list);
 
@@ -215,6 +215,7 @@ int main(){
 			}
 		}
 	}
+	// after all children have entered fifo, wait for the last on to terminate.
 	while(wait(NULL) > 0);
 	
 	//printf("main terminated.\n");
