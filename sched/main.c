@@ -89,7 +89,6 @@ int main(){
 	unsigned long i = 0;
 	struct timeval start, end;
 	struct ready_queue ready, *tmp;
-	struct list_head *pos, *q;
 	
 	INIT_LIST_HEAD(&ready.list);
 	
@@ -178,7 +177,14 @@ int main(){
 					}
 				}
 			}
-			goto CHILD;
+			for(unsigned long _i = 0; _i < T[T_inverse[R_index[i]]]; ++_i){
+				wait_one_unit;
+			}
+	
+			gettimeofday(&end, NULL);
+			printf("[Project1] %s %.6f %.6f\n", P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
+			//syscall(334, P[R_index[i]], start, end);
+			exit(0);
 		}
 		else if(pid == -1){
 			printf("Fork error!\n");
@@ -189,19 +195,6 @@ int main(){
 		}
 	}
 	
-	goto PARENT;
-	
-CHILD:
-	for(unsigned long _i = 0; _i < T[T_inverse[R_index[i]]]; ++_i){
-		wait_one_unit;
-	}
-	
-	gettimeofday(&end, NULL);
-	printf("[Project1] %s %.6f %.6f\n", P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
-	//syscall(334, P[R_index[i]], start, end);
-	exit(0);
-	
-PARENT:
 	// wait until the first child to be forked
 	while(!list_empty(&ready.list) && (S[0] == 'S' || S[0] == 'P')){
 		tmp = list_entry(ready.list.next, struct ready_queue, list);
