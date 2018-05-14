@@ -3,17 +3,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include <semaphore.h>
 #include <errno.h>
 #include <string.h>
-#include <fcntl.h> // O_CREATE
-#include <sys/mman.h> // PROT_READ, PROT_WRITE, MAP_ANONYMOUS, MAP_SHARED
 #include <unistd.h> // fork()
 #include <sched.h> // sched_setscheduler()
 #include <sys/time.h>
 #include <linux/kernel.h>
-#include <linux/list.h> 
-#include <math.h>
+#include "list.h" 
 #include "mysched.h"
 
 // wait for one unit of time
@@ -23,22 +19,11 @@
 // convenient way to convert string into policy number
 #define policy(S) (POLICY[(int)S%7%4])
 // If not in debug mode, uncomment this line.
-#define DEBUG
-#define PROTECTION (PROT_READ | PROT_WRITE)
-#define VISIBILITY (MAP_ANONYMOUS | MAP_SHARED)
+//#define DEBUG
 
 // unshared global variables:
-// We have to create SJF and PSJF as kernel module because they're not pre-built in kernel.
-// The number 1, 2, 7, 8 must be recheck for enumeration of schedular/
 // 1->FIFO, 2->RR, which is pre-vuilt in kernel.
-// 7->SJF, 8->PSJF, need to set by us.
-int POLICY[4] = {1, 2, 7, 8};
-typedef enum { CLOCK, REMAIN } GLOBAL_V;
-struct ready_queue{
-	struct list_head list;
-	long start, exe;
-	pid_t pid;
-};
+int POLICY[2] = {1, 2};
 
 int main(){
 	#ifdef DEBUG
@@ -78,12 +63,14 @@ int main(){
 	}
 	
 	// set the scheduler
-	struct sched_param param;
-	param.sched_priority = sched_get_priority_max(policy(S[0]));
+	struct sched_param param, param0;
+	param.sched_priority = sched_get_priority_max((S[0] == 'R') ? SCHED_RR : SCHED_FIFO);
+	param0.sched_priority = 0;
+	
 	// set once and all the child process will inherit the settings
-	if(S == "FIFO" || S == "RR"){
+	if(S[0] == 'F' || S[0] == 'R'){
 		if(sched_setscheduler(0, policy(S[0]), &param)){
-			printf("sched_setscheduler error: %s\n", strerror(errno));
+			printf("1 sched_setscheduler error: %s\n", strerror(errno));
 			exit(1);
 		}
 	}
@@ -93,8 +80,7 @@ int main(){
 	sort(T, T_index, N, 1);
 	inverse_permutation(R_index, R_inverse, N);
 	inverse_permutation(T_index, T_inverse, N);
-	
-	if(S == "SJF" || S == "PSJF")
+	if(S[0] == 'S' || S[0] == 'P')
 		resort(R, R_index, N, 1, T, T_inverse);
 	
 	// ready now
@@ -102,70 +88,95 @@ int main(){
 	unsigned long local_clock = 0;
 	unsigned long i = 0;
 	struct timeval start, end;
-	struct timezone zone;
 	struct ready_queue ready, *tmp;
 	struct list_head *pos, *q;
 	
 	INIT_LIST_HEAD(&ready.list);
 	
-	for(0; i < N; ++i){
+	for(; i < N; ++i){
+		int empty;
 		
-		
-		// wait until the first child to be forked
+		// wait until next child to be forked
+		// check if there is any child possibly going to terminate
+		// this implementation only rely on main process's local clock
 		while(local_clock != R[i]){
+			if((S[0] == 'S' || S[0] == 'P') && !list_empty(&ready.list)){
+				// get the running(or possibly terminated) child.
+				tmp = list_entry(ready.list.next, struct ready_queue, list);
+				
+				// if this child terminates, remove it and add the shortest one to head
+				assert( local_clock <= tmp->start + tmp->exe );
+				if(tmp->start + tmp->exe == local_clock && (i == N - 1 || R[i] != R[i+1])){
+					// remove
+					list_del(&(tmp->list));
+
+					// find the shortest and move it to the first of queue
+					tmp = find_shortest(&ready);
+					tmp->start = local_clock;
+
+					if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
+						printf("3 sched_setscheduler error: %s\n", strerror(errno));
+						exit(1);
+					}
+				}
+			}
 			wait_one_unit;
 			++local_clock;
 		}
-		
-		
-		// check if head terminate
-		tmp = list_entry(ready.list -> next, struct ready_queue, list);
-		// if head->next terminates, remove it and add the shortest one to head
-		assert( tmp->start + tmp->exe <= R[i] );
-		if(tmp->start + tmp->exe == R[i] && (i == N - 1 || R[i] != R[i+1])){
-			long shortest = INFINITY; 
-			struct list_head *shortest_pos;
-			list_for_each_safe(pos, q, &ready.list){
-				tmp = list_entry(pos, struct ready_queue, list);
-				if(tmp->exe < shortest){
-					shortest = tmp->exe;
-					shortest_pos = pos;
-				}
-			}
-			tmp = list_entry(pos, struct ready_queue, list);
-			list_del(tmp, &ready.list);
-			list_add(tmp, &ready.list);
-			if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
-				printf("sched_setscheduler error: %s\n", strerror(errno));
-				exit(1);
-			}
-		}
-		
-		int empty = list_empty_careful(&ready.list);
-		
+		// check if ready queue is empty		
+		empty = list_empty(&ready.list);
+		// add new instance to ready queue
 		tmp = (struct ready_queue*)malloc(sizeof(struct ready_queue));
 		tmp->start = (empty) ? R[i] : -1;
 		tmp->exe = T[T_inverse[R_index[i]]];
 		list_add_tail(&(tmp->list), &(ready.list));
 		
-		
-		printf("%s forks!\n", P[R_index[i]]);
+		//printf("%s forks!\n", P[R_index[i]]);
+		gettimeofday(&start, NULL);
 		pid = fork();
-		gettimeofday(&start, &zone);
 		
 		if(!pid){
-			if(S == "SJF" || S == "PSJF"){
-				int _policy = (empty) ? SCHED_FIFO : SCHED_IDLE;
-				if(sched_setscheduler(0, _policy, &param)){
-					printf("sched_setscheduler error: %s\n", strerror(errno));
-					exit(1);
-				}
-			}
 			// restrict all child processes to be executed on cpu 0
 			printf("%s %d\n", P[R_index[i]], getpid());
 			if(sched_setaffinity(0, sizeof(cpu_set_t), &mask)){
 				printf("sched_setaffinity error: %s\n", strerror(errno));
 				exit(1);
+			}
+			if(S[0] == 'S' || S[0] == 'P'){
+				if(empty){
+					if(sched_setscheduler(0, SCHED_FIFO, &param)){
+						printf("policy: %d, sched_setscheduler error: %s\n", SCHED_FIFO, strerror(errno));
+						exit(1);
+					}
+				}
+				else{
+					if(S[0] == 'P'){
+						struct ready_queue *tmp1 = list_entry(ready.list.next, struct ready_queue, list);
+						assert( tmp1->start + tmp1->exe - local_clock > 0);
+						tmp1->exe = tmp1->start + tmp1->exe - local_clock;
+						if(tmp1->exe > tmp->exe){
+							// need to add to fifo first, to avoid empty fifo ready queue,
+							// which will make idle start to run!
+							if(sched_setscheduler(0, SCHED_FIFO, &param)){
+								printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+								exit(1);
+							}
+							if(sched_setscheduler(tmp1->pid, SCHED_IDLE, &param0)){
+								printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+								exit(1);
+							}
+							list_del(&(tmp->list));
+							list_add(&(tmp->list), &(ready.list));
+						}
+						
+					}
+					else{
+						if(sched_setscheduler(0, SCHED_IDLE, &param0)){
+							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+							exit(1);
+						}
+					}
+				}
 			}
 			goto CHILD;
 		}
@@ -174,7 +185,6 @@ int main(){
 			exit(1);
 		}
 		else{
-			// parent
 			tmp->pid = pid;
 		}
 	}
@@ -185,20 +195,36 @@ CHILD:
 	for(unsigned long _i = 0; _i < T[T_inverse[R_index[i]]]; ++_i){
 		wait_one_unit;
 	}
-	//wait_unit(T[T_inverse[R_index[i]]]);
 	
-	gettimeofday(&end, &zone);
-	printf("%s terminates!\n", P[R_index[i]]);
-	syscall(334, P[R_index[i]], start, end);
+	gettimeofday(&end, NULL);
+	printf("[Project1] %s %.6f %.6f\n", P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
+	//syscall(334, P[R_index[i]], start, end);
 	exit(0);
 	
 PARENT:
+	// wait until the first child to be forked
+	while(!list_empty(&ready.list) && (S[0] == 'S' || S[0] == 'P')){
+		tmp = list_entry(ready.list.next, struct ready_queue, list);
+
+		assert( local_clock <= tmp->start + tmp->exe );
+		while(local_clock < tmp->start + tmp->exe){
+			wait_one_unit;
+			++local_clock;
+		}
+		list_del(&(tmp->list));
+		if(!list_empty(&ready.list)){	
+			tmp = find_shortest(&ready);
+			tmp->start = local_clock;
+			
+			if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
+				printf("3 sched_setscheduler error: %s\n", strerror(errno));
+				exit(1);
+			}
+		}
+	}
 	while(wait(NULL) > 0);
 	
-	sem_unlink("/mymutex");
-	sem_unlink("/mywrt");
-	sem_unlink("/mycond");
-	printf("main terminated.\n");
+	//printf("main terminated.\n");
 	exit(0);
 }
 

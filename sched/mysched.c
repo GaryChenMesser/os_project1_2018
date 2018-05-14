@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <assert.h>
+#include <math.h>
 #include "mysched.h"
+#include "list.h"
 
 // sorting function for recording indices
 // 1 for ascending, 0 for descending
@@ -94,47 +96,22 @@ void resort(int value[], int index[], int N, int ascend, const int T[], const in
                         }
                 }
         }
-
 }
 
-// flag == 1 for reading clock
-// flag == 0 for reading remain
-unsigned long reader(unsigned long * var, sem_t * mutex, sem_t * wrt){
-	unsigned long temp;
-	unsigned read_count = 0;
+struct ready_queue * find_shortest(struct ready_queue *ready){
+	long shortest = INFINITY; 
+	struct list_head *shortest_pos, *pos;
+	struct ready_queue *tmp;
+	list_for_each(pos, &(ready->list)){
+		tmp = list_entry(pos, struct ready_queue, list);
+		if( tmp->exe < shortest ){
+			shortest = tmp->exe;
+			shortest_pos = pos;
+		}
+	}
+	tmp = list_entry(shortest_pos, struct ready_queue, list);
+	list_del(&(tmp->list));
+	list_add(&(tmp->list), &(ready->list));
 	
-	// lock
-	sem_wait(mutex);
-	if(++read_count == 1)
-		sem_wait(wrt);
-	sem_post(mutex);
-//printf("In critical.\n");
-	// critical section
-	temp = *var;
-	
-	// unclock
-	sem_wait(mutex);
-	if(!--read_count)
-		sem_post(wrt);
-	sem_post(mutex);
-//printf("Out critical.\n");
-	return temp;
-}
-
-unsigned long writer(unsigned long * var, long add, sem_t * wrt){
-	unsigned long temp;
-	assert( add != 0 );
-	
-	// lock
-	sem_wait(wrt);
-	
-	// critical section
-	*var += add;
-	temp = *var;
-	assert( *var >= 0 );
-
-	// unclock
-	sem_post(wrt);
-	
-	return temp;
+	return tmp;
 }
