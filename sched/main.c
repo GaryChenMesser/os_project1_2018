@@ -13,7 +13,7 @@
 #include <sys/time.h>
 #include <linux/kernel.h>
 #include <linux/list.h> 
-
+#include <math.h>
 #include "mysched.h"
 
 // wait for one unit of time
@@ -110,6 +110,7 @@ int main(){
 	
 	for(0; i < N; ++i){
 		
+		
 		// wait until the first child to be forked
 		while(local_clock != R[i]){
 			wait_one_unit;
@@ -119,15 +120,26 @@ int main(){
 		
 		// check if head terminate
 		tmp = list_entry(ready.list -> next, struct ready_queue, list);
+		// if head->next terminates, remove it and add the shortest one to head
 		assert( tmp->start + tmp->exe <= R[i] );
-		// if head terminates, add the shortest one to head
-		if(tmp->start + tmp->exe == R[i])
-		long shortest;
-		list_for_each_safe(pos, q, &ready.list){
+		if(tmp->start + tmp->exe == R[i] && (i == N - 1 || R[i] != R[i+1])){
+			long shortest = INFINITY; 
+			struct list_head *shortest_pos;
+			list_for_each_safe(pos, q, &ready.list){
+				tmp = list_entry(pos, struct ready_queue, list);
+				if(tmp->exe < shortest){
+					shortest = tmp->exe;
+					shortest_pos = pos;
+				}
+			}
 			tmp = list_entry(pos, struct ready_queue, list);
-			if(tmp)/
+			list_del(tmp, &ready.list);
+			list_add(tmp, &ready.list);
+			if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
+				printf("sched_setscheduler error: %s\n", strerror(errno));
+				exit(1);
+			}
 		}
-		
 		
 		int empty = list_empty_careful(&ready.list);
 		
