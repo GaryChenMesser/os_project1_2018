@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Real-Time Scheduling Class (mapped to the SCHED_FIFO and SCHED_RR
- * policies)
+ * Real-Time Scheduling Class (mapped to the SCHED_FIFO,
+ * SCHED_RR, SCHED_SJF, SCHED_PSJF (OS Project 1) policies)
  */
 
 #include "sched.h"
@@ -2300,7 +2300,8 @@ static void task_tick_rt(struct rq *rq, struct task_struct *p, int queued)
 
 	/*
 	 * RR tasks need a special form of timeslice management.
-	 * FIFO tasks have no timeslices.
+	 * FIFO SJF PSJF tasks have no timeslices.
+	 * (OS Project 1)
 	 */
 	if (p->policy != SCHED_RR)
 		return;

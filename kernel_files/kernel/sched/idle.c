@@ -302,6 +302,9 @@ void play_idle(unsigned long duration_ms)
 	 * preemption.
 	 */
 	WARN_ON_ONCE(current->policy != SCHED_FIFO);
+	// OS Project 1
+	WARN_ON_ONCE(current->policy != SCHED_SJF);
+	
 	WARN_ON_ONCE(current->nr_cpus_allowed != 1);
 	WARN_ON_ONCE(!(current->flags & PF_KTHREAD));
 	WARN_ON_ONCE(!(current->flags & PF_NO_SETAFFINITY));
