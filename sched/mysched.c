@@ -55,6 +55,48 @@ void inverse_permutation(const int a[], int b[], int N){
 	}
 }
 
+void resort(int value[], int index[], int N, int ascend, const int T[], const int T_inverse[]){
+        unsigned head = 0, end = 0;
+        if(ascend){
+                while(end + 1 < N){
+                        if(value[head] == value[end + 1]){
+                                ++end;
+                        }
+                        if(value[head] != value[end + 1] || end + 1 == N){
+                                for(unsigned i = head; i <= end; ++i){
+                                        for(unsigned j = head; j <= end; ++j){
+                                                if(T[T_inverse[index[i]]] < T[T_inverse[index[j]]]){
+
+                                                        assert( value[i] == value[j] );
+                                                        swap(&index[i], &index[j]);
+                                                }
+                                        }
+                                }
+                                head = (++end);
+                        }
+                }
+        }
+        else{
+                while(end + 1 < N){
+                        if(value[head] == value[end + 1]){
+                                ++end;
+                        }
+                        if(value[head] != value[end + 1] || end + 1 == N){
+                                for(unsigned i = head; i < end; ++i){
+                                        for(unsigned j = head + 1; j <= end; ++j){
+                                                if(T[T_inverse[index[i]]] > T[T_inverse[index[j]]]){
+                                                        assert( value[i] == value[j] );
+                                                        swap(&index[i], &index[j]);
+                                                }
+                                        }
+                                }
+                                head = (++end);
+                        }
+                }
+        }
+
+}
+
 // flag == 1 for reading clock
 // flag == 0 for reading remain
 unsigned long reader(unsigned long * var, sem_t * mutex, sem_t * wrt){
