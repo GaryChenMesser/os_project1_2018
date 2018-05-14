@@ -122,7 +122,7 @@ int main(){
 		assert( tmp->start + tmp->exe <= R[i] );
 		// if head terminates, add the shortest one to head
 		if(tmp->start + tmp->exe == R[i])
-		long shortest 
+		long shortest;
 		list_for_each_safe(pos, q, &ready.list){
 			tmp = list_entry(pos, struct ready_queue, list);
 			if(tmp)/
