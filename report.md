@@ -104,7 +104,12 @@ We have implemented the four scheduling algorithms followed with their procedure
 
 ## Running Result
 
+// present at demo
+
 ## Discussion
+
+觀察輸出時間可以發現，在整個過程中，本排程器因為擁有單一CPU，所以執行幾乎不受子行程數量所影響，可以不被block的按照自己的local time去fork與推測不同子行程的結束時間。這個性質與本架構原本設計的要求一致，也就是讓排程器本身近似平行化的執行，不受其他排程影響。
+而子行程也如預期的，並沒有在idle狀態下被執行(本排程器的設計有考慮這點，因此不讓任何一個時間的SCHED_FIFO的ready queue空掉)，但因為每個子行程並不是在一被fork的同時就順利進入SCHED_FIFO的policy，也因為每個子行程的結束時間是用猜的，所以一旦延遲了，就可能會發生ready queue空掉的情形(這時idle一定是空的)，導致總執行時間稍微拉長。至於排程器如果提早預測某子行程結束，並不會影響整體結果，因為子行程的排成是用SCHED_FIFO，因此只要順序正確，ready queue沒有空掉，就算提早進入也只會等在那裏，不影響結果。
 
 ## Contribution
 
