@@ -112,6 +112,7 @@ We have implemented the four scheduling algorithms followed with their procedure
 
 ### 陳政曄
 Design the user space scheduler and write the main function.
+
 Try three different scheduler architecture：
 
 - Use only one clock to record time, which need lots of shared address between processes and make life hard...
