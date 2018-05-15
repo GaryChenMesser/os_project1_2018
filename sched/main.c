@@ -9,6 +9,7 @@
 #include <sched.h> // sched_setscheduler()
 #include <sys/time.h>
 #include <linux/kernel.h>
+#include <sys/syscall.h>
 #include "list.h" 
 #include "mysched.h"
 
@@ -135,6 +136,10 @@ int main(){
 		pid = fork();
 		
 		if(!pid){
+			unsigned long start_sec, start_nsec, end_sec, end_nsec;
+			int this_pid = getpid();
+			// System define of 350, isStart
+			syscall(350, 1, &start_sec, &start_nsec, &end_sec, &end_nsec, &this_pid);
 			// restrict all child processes to be executed on cpu 0
 			printf("%s %d\n", P[R_index[i]], getpid());
 			if(sched_setaffinity(0, sizeof(cpu_set_t), &mask)){
@@ -183,7 +188,8 @@ int main(){
 	
 			gettimeofday(&end, NULL);
 			printf("[Project1] %s %.6f %.6f\n", P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
-			//syscall(334, P[R_index[i]], start, end);
+			// System call of 350, !isStart
+			syscall(350, 0, &start_sec, &start_nsec, &end_sec, &end_nsec, &this_pid);
 			exit(0);
 		}
 		else if(pid == -1){
