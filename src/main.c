@@ -116,13 +116,6 @@ int main(){
 					tmp1 = check_preempt(&ready, tmp, local_clock, &preempt);
 				}
 			}
-			
-			if(preempt){
-				if(sched_setscheduler(tmp1->pid, SCHED_IDLE, &param0)){
-					printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
-					exit(1);
-				}
-			}
 		}
 		
 		gettimeofday(&start, NULL);
@@ -132,14 +125,14 @@ int main(){
 			this_pid = getpid();
 //printf("%d fork\n", this_pid);
 			syscall(350, 1, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
-			//printf("%s %d\n", P[R_index[i]], getpid());
+			printf("%s %d\n", P[R_index[i]], getpid());
 			
 			for(unsigned long _i = 0; _i < T[T_inverse[R_index[i]]]; ++_i){
 				wait_one_unit;
 			}
 	
 			gettimeofday(&end, NULL);
-			printf("[Project1] %d, %s %.6f %.6f\n", getpid(), P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
+			//printf("[Project1] %d, %s %.6f %.6f\n", getpid(), P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
 			//printf("%s\n", P[R_index[i]]);
 			syscall(350, 0, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			exit(0);
@@ -183,6 +176,10 @@ int main(){
 								printf("policy: %d, sched_setscheduler error: %s\n", SCHED_FIFO, strerror(errno));
 								exit(1);
 							}
+							if(sched_setscheduler(tmp1->pid, SCHED_IDLE, &param0)){
+								printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+								exit(1);
+							}
 		      			}
 						else{
 							if(list_entry(ready.list.next, struct ready_queue, list)->pid == pid){
@@ -205,10 +202,12 @@ int main(){
 	while(!list_empty(&ready.list) && (S[0] == 'S' || S[0] == 'P')){
 		check_remain(&ready, &param, &local_clock);
 	}
+
 	// after all children have entered fifo, wait for the last on to terminate.
 	while(wait(NULL) > 0);
-	
-	assert(sched_getscheduler(0) == SCHED_OTHER);
+//printf("sched_getscheduler(0) = %d\n", sched_getscheduler(0));
+//printf("SCHED_OTHER = %d\n", SCHED_OTHER);
+	//assert(sched_getscheduler(0) == SCHED_OTHER);
 	
 	//printf("main terminated.\n");
 	exit(0);

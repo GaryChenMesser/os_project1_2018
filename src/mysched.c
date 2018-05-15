@@ -72,7 +72,7 @@ void resort(int value[], int index[], int N, int ascend, const int T[], const in
                                         for(unsigned j = head; j <= end; ++j){
                                                 if(T[T_inverse[index[i]]] < T[T_inverse[index[j]]]){
 
-                                                        assert( value[i] == value[j] );
+                                                        //assert( value[i] == value[j] );
                                                         swap(&index[i], &index[j]);
                                                 }
                                         }
@@ -90,7 +90,7 @@ void resort(int value[], int index[], int N, int ascend, const int T[], const in
                                 for(unsigned i = head; i < end; ++i){
                                         for(unsigned j = head + 1; j <= end; ++j){
                                                 if(T[T_inverse[index[i]]] > T[T_inverse[index[j]]]){
-                                                        assert( value[i] == value[j] );
+                                                        //assert( value[i] == value[j] );
                                                         swap(&index[i], &index[j]);
                                                 }
                                         }
@@ -127,8 +127,8 @@ void check_terminate(struct ready_queue *ready, struct sched_param *param, unsig
 	tmp = list_entry(ready->list.next, struct ready_queue, list);
 
 	// if this child terminates, remove it and add the shortest one to head
-	assert( tmp->start >= 0 );
-	assert( local_clock <= tmp->start + tmp->exe );
+	//assert( tmp->start >= 0 );
+	//assert( local_clock <= tmp->start + tmp->exe );
 	if(tmp->start + tmp->exe == local_clock){
 		// remove
 //printf("delete %d\n", tmp->pid);
@@ -137,7 +137,7 @@ void check_terminate(struct ready_queue *ready, struct sched_param *param, unsig
 			// find the shortest and move it to the first of queue
 			tmp = find_shortest(ready);
 //printf("shortest: %d %d %d\n", tmp->start, tmp->exe, tmp->pid);
-			assert( tmp->start == -1 );
+			//assert( tmp->start == -1 );
 			tmp->start = local_clock;
 
 //printf("set1 %d time %d\n", tmp->pid, local_clock);
@@ -157,12 +157,12 @@ struct ready_queue * check_preempt(struct ready_queue *ready, struct ready_queue
 	struct ready_queue *tmp1;
 	
 	tmp1 = list_entry(ready->list.next, struct ready_queue, list);
-	assert( tmp1->start >= 0 );
+	//assert( tmp1->start >= 0 );
 //printf("tmp1->start  = %d\n", tmp1->start );
 //printf("tmp1->pid  = %d\n", tmp1->pid );
 //printf("tmp1->start + tmp1->exe = %d\n",tmp1->start + tmp1->exe);
 //printf("local_clock = %d\n", local_clock);
-	assert( tmp1->start + tmp1->exe - local_clock > 0);
+	//assert( tmp1->start + tmp1->exe - local_clock > 0);
 
 //printf("tmp1->exe = %d tmp-> = %d\n", tmp1->exe, tmp->exe);
 	if(tmp != tmp1){
@@ -174,7 +174,7 @@ struct ready_queue * check_preempt(struct ready_queue *ready, struct ready_queue
 			list_del(&(tmp->list));
 //printf("add2 %d\n", tmp->pid);
 			list_add(&(tmp->list), &(ready->list));
-			assert( tmp->start == -1 );
+			//assert( tmp->start == -1 );
 			tmp->start = local_clock;
 		}
 	}
@@ -189,8 +189,8 @@ void check_remain(struct ready_queue *ready, struct sched_param *param, unsigned
 	tmp = list_entry(ready->list.next, struct ready_queue, list);
 
 
-	assert( tmp->start >= 0 );
-	assert( *local_clock <= tmp->start + tmp->exe );
+	//assert( tmp->start >= 0 );
+	//assert( *local_clock <= tmp->start + tmp->exe );
 	
 	while(*local_clock < tmp->start + tmp->exe){
 		wait_one_unit;
@@ -200,10 +200,10 @@ void check_remain(struct ready_queue *ready, struct sched_param *param, unsigned
 	list_del(&(tmp->list));
 	if(!list_empty(&ready->list)){	
 		tmp = find_shortest(ready);
-		assert( tmp->start == -1 );
+		//assert( tmp->start == -1 );
 		tmp->start = *local_clock;
 
-		assert(  tmp->pid != 0 );
+		//assert(  tmp->pid != 0 );
 //printf("set2 %d, time %d\n", tmp->pid, *local_clock);
 		if(sched_setscheduler(tmp->pid, SCHED_FIFO, param)){
 			printf("3 sched_setscheduler error: %s\n", strerror(errno));
