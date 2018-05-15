@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <assert.h>
-
+#include <stdlib.h>
 #include <math.h>
 #include "mysched.h"
 #include "list.h"
@@ -117,4 +117,77 @@ struct ready_queue * find_shortest(struct ready_queue *ready){
 	list_add(&(tmp->list), &(ready->list));
 	
 	return tmp;
+}
+
+void check_terminate(struct ready_queue *ready, struct sched_param *param, unsigned long local_clock){
+	struct ready_queue *tmp;
+	
+	// get the running(or possibly terminated) child.
+	tmp = list_entry(ready->list.next, struct ready_queue, list);
+
+	// if this child terminates, remove it and add the shortest one to head
+	assert( tmp->start >= 0 );
+	assert( local_clock <= tmp->start + tmp->exe );
+	if(tmp->start + tmp->exe == local_clock){
+		// remove
+		list_del(&(tmp->list));
+		// find the shortest and move it to the first of queue
+		tmp = find_shortest(ready);
+		assert( tmp->start == -1 );
+		tmp->start = local_clock;
+
+//printf("set1 %d\n", tmp->pid);
+	 	if(sched_setscheduler(tmp->pid, SCHED_FIFO, param)){
+			printf("3 sched_setscheduler error: %s\n", strerror(errno));
+			exit(1);
+		}
+	}
+}
+struct ready_queue * check_preempt(struct ready_queue *ready, struct ready_queue *tmp, unsigned long local_clock, int preempt){
+	struct ready_queue *tmp1;
+	
+	tmp1 = list_entry(ready->list.next, struct ready_queue, list);
+	assert( tmp1->start >= 0 );
+//printf("tmp1->start + tmp1->exe = %d\n",tmp1->start + tmp1->exe);
+//printf("local_clock = %d\n", local_clock);
+	assert( tmp1->start + tmp1->exe - local_clock > 0);
+	
+	if(tmp1->exe > tmp->exe){
+		tmp1->exe = tmp1->start + tmp1->exe - local_clock;
+		tmp1->start = -1;
+		preempt = 1;
+		list_del(&(tmp->list));
+		list_add(&(tmp->list), &(ready->list));
+		assert( tmp->start == -1 );
+		tmp->start = local_clock;
+	}
+	return tmp1;
+}
+
+void check_remain(struct ready_queue *ready, struct sched_param *param, unsigned long * local_clock){
+	struct ready_queue *tmp;
+	tmp = list_entry(ready->list.next, struct ready_queue, list);
+
+
+		
+	assert( tmp->start >= 0 );
+	assert( *local_clock <= tmp->start + tmp->exe );
+	
+	while(*local_clock < tmp->start + tmp->exe){
+		wait_one_unit;
+		++(*local_clock);
+	}
+	
+	list_del(&(tmp->list));
+	if(!list_empty(&ready->list)){	
+		tmp = find_shortest(ready);
+		assert( tmp->start == -1 );
+		tmp->start = *local_clock;
+
+//printf("set2 %d\n", tmp->pid);
+		if(sched_setscheduler(tmp->pid, SCHED_FIFO, param)){
+			printf("3 sched_setscheduler error: %s\n", strerror(errno));
+			exit(1);
+		}
+	}
 }
