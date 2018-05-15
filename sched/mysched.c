@@ -99,7 +99,7 @@ void resort(int value[], int index[], int N, int ascend, const int T[], const in
 }
 
 struct ready_queue * find_shortest(struct ready_queue *ready){
-	long shortest = INFINITY; 
+	long long shortest = 100000000000; 
 	struct list_head *shortest_pos, *pos;
 	struct ready_queue *tmp;
 	list_for_each(pos, &(ready->list)){
