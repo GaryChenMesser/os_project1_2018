@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <assert.h>
+
 #include <math.h>
 #include "mysched.h"
 #include "list.h"
+
 
 // sorting function for recording indices
 // 1 for ascending, 0 for descending
@@ -56,6 +58,7 @@ void inverse_permutation(const int a[], int b[], int N){
 		}
 	}
 }
+
 
 void resort(int value[], int index[], int N, int ascend, const int T[], const int T_inverse[]){
         unsigned head = 0, end = 0;
