@@ -1,16 +1,17 @@
 #include <linux/kernel.h>
 #include <linux/ktime.h>
+#include <linux/timekeeping.h:>
 #include <linux/linkage.h>
 
 asmlinkage int sys_my_time(int isStart, unsigned long *start_sec,
                            unsigned long *start_nsec, unsigned long *end_sec,
                            unsigned long *end_nsec, int *pid) {
   struct timespec t;
-  ktime_t currtime;
+  //ktime_t currtime;
 
-  currtime = ktime_get();
+  //currtime = ktime_get();
 
-  t = ktime_to_timespec(currtime);
+  getnstimeofday(&t);
 
   if (isStart) {
     *start_sec = t.tv_sec;

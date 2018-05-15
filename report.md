@@ -15,7 +15,7 @@ Group 2
 
 排程器(主程式、父行程)本身會單獨使用一顆 cpu 並使用 `SCHED_OTHER` policy，以完成比較準確的時間單位計算並不被自己 fork 出來的子行程干擾。相對的，子行程共用另一顆 CPU，目的是讓 `SCHED_FIFO` `和SCHED_RR` 可以實現真正的行為，不被類似 pipeline 的效果影響。
 
-由於主程式和子行程的 CPU 和 policy 都不一樣，因此兩者不會出現在同一個 ready queue 上，且不會互卡CPU時間，因此可以達到接近平行化的效果，好處是可以直接在主程式和子行程跑計算時間的空迴圈，不會因為兩者同時跑導致時間伸縮。
+由於主程式和子行程的 CPU 和 policy 都不一樣，因此兩者不會出現在同一個 ready queue 上，且不會互卡CPU時間(不同CPU)，因此可以達到接近平行化的效果，好處是可以直接在主程式和子行程跑計算時間的空迴圈，不會因為兩者同時跑導致時間伸縮。
 
 ### Scheduler
 
@@ -100,19 +100,33 @@ To record time, we can use both `getnstimeofday()` or `ktime_get()`. The prevois
 
 ### Simulator
 
-// 模擬設計
+We have implemented the four scheduling algorithms followed with their procedure introduced in class. And we use the thereotical results to verify the real order created from running process.
 
 ## Running Result
 
+// present at demo
+
 ## Discussion
+
+觀察輸出時間可以發現，在整個過程中，本排程器因為擁有單一CPU，所以執行幾乎不受子行程數量所影響，可以不被block的按照自己的local time去fork與推測不同子行程的結束時間。這個性質與本架構原本設計的要求一致，也就是讓排程器本身近似平行化的執行，不受其他排程影響。
+而子行程也如預期的，並沒有在idle狀態下被執行(本排程器的設計有考慮這點，因此不讓任何一個時間的SCHED_FIFO的ready queue空掉)，但因為每個子行程並不是在一被fork的同時就順利進入SCHED_FIFO的policy，也因為每個子行程的結束時間是用猜的，所以一旦延遲了，就可能會發生ready queue空掉的情形(這時idle一定是空的)，導致總執行時間稍微拉長。至於排程器如果提早預測某子行程結束，並不會影響整體結果，因為子行程的排成是用SCHED_FIFO，因此只要順序正確，ready queue沒有空掉，就算提早進入也只會等在那裏，不影響結果。
 
 ## Contribution
 
 // 各自填
 
 ### 陳政曄
+Design the user space scheduler and write the main function.
+
+Try three different scheduler architecture：
+
+- Use only one clock to record time, which need lots of shared address between processes and make life hard...
+- Let child fork child. The main function just have to wait for all children's termination. Fail because there is no direct way to no whether a grandchild is alive or not.
+- The last one, which is in ```main.c```.
 
 ### 鄧聿晰
+
+Write scheduler simulator and create testdata outputs for checkout.
 
 ### 劉安齊
 
