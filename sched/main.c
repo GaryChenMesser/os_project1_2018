@@ -88,13 +88,17 @@ int main(){
 	pid_t pid;
 	unsigned long local_clock = 0;
 	unsigned long i = 0;
+	int this_pid;
+	struct timeval start, end;
+	struct timespec start_n, end_n;
+	struct ready_queue ready, *tmp, *tmp1;
 	struct timeval start, end;
 	struct ready_queue ready, *tmp;
 	
 	INIT_LIST_HEAD(&ready.list);
 	
 	for(; i < N; ++i){
-		int empty;
+		int empty, preempt = 0;
 		
 		// wait until next child to be forked
 		// check if there is any child possibly going to terminate
@@ -105,16 +109,19 @@ int main(){
 				tmp = list_entry(ready.list.next, struct ready_queue, list);
 				
 				// if this child terminates, remove it and add the shortest one to head
+				assert( tmp->start >= 0 );
 				assert( local_clock <= tmp->start + tmp->exe );
-				if(tmp->start + tmp->exe == local_clock && (i == N - 1 || R[i] != R[i+1])){
+				if(tmp->start + tmp->exe == local_clock){
 					// remove
 					list_del(&(tmp->list));
 
 					// find the shortest and move it to the first of queue
 					tmp = find_shortest(&ready);
-					tmp->start = local_clock;
 
-					if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
+          assert( tmp->start == -1 );
+					tmp->start = local_clock;
+					
+          if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
 						printf("3 sched_setscheduler error: %s\n", strerror(errno));
 						exit(1);
 					}
@@ -122,6 +129,28 @@ int main(){
 			}
 			wait_one_unit;
 			++local_clock;
+
+      if((S[0] == 'S' || S[0] == 'P') && !list_empty(&ready.list)){
+				// get the running(or possibly terminated) child.
+				tmp = list_entry(ready.list.next, struct ready_queue, list);
+				
+				// if this child terminates, remove it and add the shortest one to head
+				assert( tmp->start >= 0 );
+				assert( local_clock <= tmp->start + tmp->exe );
+				if(tmp->start + tmp->exe == local_clock){
+					// remove
+					list_del(&(tmp->list));
+
+					// find the shortest and move it to the first of queue
+					tmp = find_shortest(&ready);
+					assert( tmp->start == -1 );
+					tmp->start = local_clock;
+					if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
+						printf("3 sched_setscheduler error: %s\n", strerror(errno));
+						exit(1);
+					}
+				}
+			}
 		}
 		// check if ready queue is empty		
 		empty = list_empty(&ready.list);
@@ -130,18 +159,31 @@ int main(){
 		tmp->start = (empty) ? R[i] : -1;
 		tmp->exe = T[T_inverse[R_index[i]]];
 		list_add_tail(&(tmp->list), &(ready.list));
+		// 
+		if(S[0] == 'P'){
+			tmp1 = list_entry(ready.list.next, struct ready_queue, list);
+			assert( tmp1->start >= 0 );
+			assert( tmp1->start + tmp1->exe - local_clock > 0);
+			
+			if(tmp1->exe > tmp->exe){
+				tmp1->exe = tmp1->start + tmp1->exe - local_clock;
+				tmp1->start = -1;
+				preempt = 1;
+				list_del(&(tmp->list));
+				list_add(&(tmp->list), &(ready.list));
+				assert( tmp->start == -1 );
+				tmp->start = local_clock;
+			}
+		}
 		
-		//printf("%s forks!\n", P[R_index[i]]);
 		gettimeofday(&start, NULL);
 		pid = fork();
 		
 		if(!pid){
-			unsigned long start_sec, start_nsec, end_sec, end_nsec;
-			int this_pid = getpid();
-			// System define of 350, isStart
-			syscall(350, 1, &start_sec, &start_nsec, &end_sec, &end_nsec, &this_pid);
-			// restrict all child processes to be executed on cpu 0
+			this_pid = getpid();
+			syscall(350, 1, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			printf("%s %d\n", P[R_index[i]], getpid());
+			// restrict all child processes to be executed on cpu 0
 			if(sched_setaffinity(0, sizeof(cpu_set_t), &mask)){
 				printf("sched_setaffinity error: %s\n", strerror(errno));
 				exit(1);
@@ -154,26 +196,18 @@ int main(){
 					}
 				}
 				else{
-					if(S[0] == 'P'){
-						struct ready_queue *tmp1 = list_entry(ready.list.next, struct ready_queue, list);
-						assert( tmp1->start + tmp1->exe - local_clock > 0);
-						tmp1->exe = tmp1->start + tmp1->exe - local_clock;
-						if(tmp1->exe > tmp->exe){
-							// need to add to fifo first, to avoid empty fifo ready queue,
-							// which will make idle start to run!
-							if(sched_setscheduler(0, SCHED_FIFO, &param)){
-								printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
-								exit(1);
-							}
-							if(sched_setscheduler(tmp1->pid, SCHED_IDLE, &param0)){
-								printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
-								exit(1);
-							}
-							list_del(&(tmp->list));
-							list_add(&(tmp->list), &(ready.list));
+					if(S[0] == 'P' && preempt){
+						// need to add to fifo first, to avoid empty fifo ready queue,
+						// which will make idle start to run!
+						if(sched_setscheduler(0, SCHED_FIFO, &param)){
+							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+							exit(1);
 						}
-						
-					}
+						if(sched_setscheduler(tmp1->pid, SCHED_IDLE, &param0)){
+							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+							exit(1);
+						}
+          }
 					else{
 						if(sched_setscheduler(0, SCHED_IDLE, &param0)){
 							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
@@ -188,8 +222,7 @@ int main(){
 	
 			gettimeofday(&end, NULL);
 			printf("[Project1] %s %.6f %.6f\n", P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
-			// System call of 350, !isStart
-			syscall(350, 0, &start_sec, &start_nsec, &end_sec, &end_nsec, &this_pid);
+			syscall(350, 0, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			exit(0);
 		}
 		else if(pid == -1){
@@ -200,12 +233,13 @@ int main(){
 			tmp->pid = pid;
 		}
 	}
-	
 	// after all children have been forked, consume the remaining children which are still in idle.
 	while(!list_empty(&ready.list) && (S[0] == 'S' || S[0] == 'P')){
 		tmp = list_entry(ready.list.next, struct ready_queue, list);
-
+		
+		//assert( tmp1->start >= 0 );
 		assert( local_clock <= tmp->start + tmp->exe );
+		
 		while(local_clock < tmp->start + tmp->exe){
 			wait_one_unit;
 			++local_clock;
@@ -213,6 +247,7 @@ int main(){
 		list_del(&(tmp->list));
 		if(!list_empty(&ready.list)){	
 			tmp = find_shortest(&ready);
+			assert( tmp->start == -1 );
 			tmp->start = local_clock;
 			
 			if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
