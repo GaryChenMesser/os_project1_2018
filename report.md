@@ -111,6 +111,12 @@ We have implemented the four scheduling algorithms followed with their procedure
 // 各自填
 
 ### 陳政曄
+Design the user space scheduler and write the main function.
+Try three different scheduler architecture：
+
+- Use only one clock to record time, which need lots of shared address between processes and make life hard...
+- Let child fork child. The main function just have to wait for all children's termination. Fail because there is no direct way to no whether a grandchild is alive or not.
+- The last one, which is in ```main.c```.
 
 ### 鄧聿晰
 
