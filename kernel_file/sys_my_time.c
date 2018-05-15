@@ -11,7 +11,7 @@ asmlinkage int sys_my_time(int isStart, unsigned long *start_sec,
 
   //currtime = ktime_get();
 
-  getnstimeofday;
+  getnstimeofday(&t);
 
   if (isStart) {
     *start_sec = t.tv_sec;
