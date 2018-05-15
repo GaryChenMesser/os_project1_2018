@@ -18,7 +18,6 @@ asmlinkage int sys_my_time(int isStart, unsigned long *start_sec,
     *end_sec = t.tv_sec;
     *end_nsec = t.tv_nsec;
     printk(
-        "<0>"
         "[project1] %d %lu.%09lu %lu.%09lu\n",
         *pid, *start_sec, *start_nsec, *end_sec, *end_nsec);
   }
