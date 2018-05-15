@@ -113,7 +113,6 @@ We have implemented the four scheduling algorithms followed with their procedure
 ### 陳政曄
 
 ### 鄧聿晰
-Write scheduler simulator and create testdata outputs for checkout.
 
 Write scheduler simulator and create testdata outputs for checkout.
 
