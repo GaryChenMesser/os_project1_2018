@@ -2,9 +2,9 @@
 
 Group 2
 
-- 陳政曄
-- 鄧聿晰
-- 劉安齊
+- 陳政曄 @GaryChenMesser
+- 鄧聿晰 @tigercosmos
+- 劉安齊 @b05701204
 
 ## Design
 本排程器分別使用不同的policy組合實現不同的排程：
