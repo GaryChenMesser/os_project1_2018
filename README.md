@@ -1,5 +1,9 @@
 # OS Project 1 2018
 
+薛智文 作業系統 2018 春
+
+## Install System Call
+
 1. Copy `kernel_file/sys_my_time.c` to `linux/kernel/sys_my_time.c`
 2. Add line "`obj-y += sys_my_time.o`" in `linux/kernel/Makefile`
 3. Add line in "`linux/include/linux/syscalls.h`":
@@ -12,3 +16,19 @@
 5. `make -j4 bzImage`
 6. `make install`
 7. reboot
+
+## Usage
+
+```sh
+cd src
+make
+./sched.out < FILE
+```
+
+simulator:
+
+```sh
+cd scr_test
+make
+./a.out < FILE
+```
