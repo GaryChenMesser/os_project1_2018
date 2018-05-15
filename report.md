@@ -9,8 +9,9 @@ Group 2
 ## Design
 
 本排程器分別使用不同的 policy 組合實現不同的排程：
-* 使用 `SCHED_FIFO` 實現 `FIFO`
-* 使用 `SCHED_FIFO` 搭配 `SCHED_IDLE` 完成 `RR`, `SJF` 和 `PSJF` 的實作。
+
+- 使用 `SCHED_FIFO` 實現 `FIFO`
+- 使用 `SCHED_FIFO` 搭配 `SCHED_IDLE` 完成 `RR`, `SJF` 和 `PSJF` 的實作。
 
 排程器(主程式、父行程)本身會單獨使用一顆 cpu 並使用 `SCHED_OTHER` policy，以完成比較準確的時間單位計算並不被自己 fork 出來的子行程干擾。相對的，子行程共用另一顆 CPU，目的是讓 `SCHED_FIFO` `和SCHED_RR` 可以實現真正的行為，不被類似 pipeline 的效果影響。
 
@@ -45,7 +46,7 @@ Group 2
   - 為空
     - 把自己的 sched policy 改成 `SCHED_FIFO`
   - 不為空
-    - 若是 `PSJF`，且剩餘時間大於 queue 開頭的行程的剩餘時間，把自己的 sched `policy改成SCHED_FIFO`
+    - 若是 `PSJF`，且剩餘時間大於 queue 開頭的行程的剩餘時間，把自己的 sched policy 改成`SCHED_FIFO`
     - 若否，把自己的 sched policy 改成 `SCHED_IDLE`
 
 ### System Call
@@ -151,6 +152,13 @@ asmlinkage int sys_my_time() {
 
 then Booooom! Error????
 
+```no
+kernel/sys_my_time.c: In function ‘sys_my_time’:
+kernel/sys_my_time.c:8:3: error: implicit declaration of function ‘getnstimeofday’ [-Werror=implicit-function-declaration]
+getnstimeofday(&t);
+^
+```
+
 We finally know that the header should be:
 
 ```c
@@ -160,4 +168,6 @@ We finally know that the header should be:
 
 rather than `<linux/time.h>`.
 
-Since the version 3.17, the function has moved. There is no discussion on the Internet, so we did a good job, opening a quesion on Stackover Flow. :)
+Since the kernel version `3.17`, the function has moved from `time.h` to `timekeeping.h`. Also, we cannot only import `<linux/timekeeping.h>`. The `<linux/ktime.h>` need to be bound together.
+
+There is no discussion on the Internet, so we did a good job, opening a quesion on Stackover Flow and get the answer. :)
