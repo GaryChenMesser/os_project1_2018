@@ -9,6 +9,7 @@ asmlinkage int sys_my_time(int isStart, unsigned long *start_sec,
   ktime_t currtime;
 
   currtime = ktime_get();
+  
   t = ktime_to_timespec(currtime);
 
   if (isStart) {
