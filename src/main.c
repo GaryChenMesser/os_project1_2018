@@ -13,6 +13,9 @@
 #include "list.h" 
 #include "mysched.h"
 
+// #define DEBUG
+
+
 // unshared global variables:
 // 1->FIFO, 2->RR, which is pre-vuilt in kernel.
 int POLICY[2] = {1, 2};
