@@ -100,7 +100,7 @@ To record time, we can use both `getnstimeofday()` or `ktime_get()`. The prevois
 
 ### Simulator
 
-// 模擬設計
+We have implemented the four scheduling algorithms followed with their procedure introduced in class. And we use the thereotical results to verify the real order created from running process.
 
 ## Running Result
 
@@ -113,6 +113,8 @@ To record time, we can use both `getnstimeofday()` or `ktime_get()`. The prevois
 ### 陳政曄
 
 ### 鄧聿晰
+
+Write scheduler simulator and create testdata outputs for checkout.
 
 ### 劉安齊
 
