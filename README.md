@@ -22,7 +22,7 @@
 ```sh
 cd src
 make
-./sched.out < FILE
+sudo ./sched.out < FILE
 ```
 
 simulator:
