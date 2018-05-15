@@ -188,7 +188,7 @@ void RR(int *R, int *R_index, int *T, int *T_inverse, int N)
 	int head = 0;
 	int tail = 0;
 
-	int quantum = 20;	
+	int quantum = 500;	
 	
 	while (remain > 0) 
 	{
@@ -277,7 +277,13 @@ int main()
 	{
 		RR(R, R_index, T, T_inverse, N);
 	}
-
+	else if(strcmp(S, "FIFO") == 0)
+	{
+		for(size_t i = 0; i< N; i++)
+		{
+			printf("P%d\n", R_index[i] + 1);
+		}
+	}
 
 	return 0;
 }
