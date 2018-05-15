@@ -9,6 +9,7 @@
 #include <sched.h> // sched_setscheduler()
 #include <sys/time.h>
 #include <linux/kernel.h>
+#include <sys/syscall.h>
 #include "list.h" 
 #include "mysched.h"
 
@@ -91,6 +92,8 @@ int main(){
 	struct timeval start, end;
 	struct timespec start_n, end_n;
 	struct ready_queue ready, *tmp, *tmp1;
+	struct timeval start, end;
+	struct ready_queue ready, *tmp;
 	
 	INIT_LIST_HEAD(&ready.list);
 	
@@ -114,9 +117,11 @@ int main(){
 
 					// find the shortest and move it to the first of queue
 					tmp = find_shortest(&ready);
-					assert( tmp->start == -1 );
+
+          assert( tmp->start == -1 );
 					tmp->start = local_clock;
-					if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
+					
+          if(sched_setscheduler(tmp->pid, SCHED_FIFO, &param)){
 						printf("3 sched_setscheduler error: %s\n", strerror(errno));
 						exit(1);
 					}
@@ -124,7 +129,8 @@ int main(){
 			}
 			wait_one_unit;
 			++local_clock;
-			if((S[0] == 'S' || S[0] == 'P') && !list_empty(&ready.list)){
+
+      if((S[0] == 'S' || S[0] == 'P') && !list_empty(&ready.list)){
 				// get the running(or possibly terminated) child.
 				tmp = list_entry(ready.list.next, struct ready_queue, list);
 				
@@ -201,7 +207,7 @@ int main(){
 							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
 							exit(1);
 						}
-					}
+          }
 					else{
 						if(sched_setscheduler(0, SCHED_IDLE, &param0)){
 							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
