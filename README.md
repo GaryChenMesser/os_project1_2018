@@ -1,7 +1,7 @@
 # OS Project 1 2018
 
 1. Copy `kernel_file/sys_my_time.c` to `linux/kernel/sys_my_time.c`
-2. Add line "`obj-y += my_time.o`" in `linux/kernel/Makefile`
+2. Add line "`obj-y += sys_my_time.o`" in `linux/kernel/Makefile`
 3. Add line in "`linux/include/linux/syscalls.h`":
     ```c
     asmlinkage int sys_my_time(int isStart, unsigned long *start_sec,
