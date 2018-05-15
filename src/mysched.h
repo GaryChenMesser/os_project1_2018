@@ -11,6 +11,8 @@
 #define wait_one_unit ({ volatile unsigned long i; for(i = 0; i < 1000000UL; i++); })
 // convenient way to convert string into policy number
 #define policy(S) (POLICY[(int)S%7%4])
+// If not in debug mode, uncomment this line.
+#define DEBUG
 
 struct ready_queue{
 	struct list_head list;

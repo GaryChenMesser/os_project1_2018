@@ -13,9 +13,6 @@
 #include "list.h" 
 #include "mysched.h"
 
-// #define DEBUG
-
-
 // unshared global variables:
 // 1->FIFO, 2->RR, which is pre-vuilt in kernel.
 int POLICY[2] = {1, 2};
@@ -53,9 +50,7 @@ int main(){
 
 	// restrict the main process to execute on cpu 1
 	if(sched_setaffinity(0, sizeof(cpu_set_t), &mask1)){
-		#ifdef DEBUG
 		printf("sched_setaffinity error: %s\n", strerror(errno));
-		#endif 
 		exit(1);
 	}
 	
@@ -67,9 +62,7 @@ int main(){
 	// set once and all the child process will inherit the settings
 	if(S[0] == 'F' || S[0] == 'R'){
 		if(sched_setscheduler(0, policy(S[0]), &param)){
-			#ifdef DEBUG
 			printf("1 sched_setscheduler error: %s\n", strerror(errno));
-			#endif 
 			exit(1);
 		}
 	}
@@ -132,76 +125,20 @@ int main(){
 			this_pid = getpid();
 //printf("%d fork\n", this_pid);
 			syscall(350, 1, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
-<<<<<<< HEAD
 			printf("%s %d\n", P[R_index[i]], getpid());
 			
-=======
-			
-			// restrict all child processes to be executed on cpu 0
-			if(sched_setaffinity(0, sizeof(cpu_set_t), &mask)){
-				#ifdef DEBUG
-				printf("sched_setaffinity error: %s\n", strerror(errno));
-				#endif 
-				exit(1);
-			}
-			if(S[0] == 'S' || S[0] == 'P'){
-				if(empty){
-					if(sched_setscheduler(0, SCHED_FIFO, &param)){
-						#ifdef DEBUG
-						printf("policy: %d, sched_setscheduler error: %s\n", SCHED_FIFO, strerror(errno));
-						#endif 
-						exit(1);
-					}
-				}
-				else{
-					if(S[0] == 'P' && preempt){
-						// need to add to fifo first, to avoid empty fifo ready queue,
-						// which will make idle start to run!
-						if(sched_setscheduler(0, SCHED_FIFO, &param)){
-							#ifdef DEBUG
-							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
-							#endif 
-							exit(1);
-						}
-						if(sched_setscheduler(tmp1->pid, SCHED_IDLE, &param0)){
-							#ifdef DEBUG
-							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
-							#endif 
-							exit(1);
-						}
-          }
-					else{
-						if(sched_setscheduler(0, SCHED_IDLE, &param0)){
-							#ifdef DEBUG
-							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
-							#endif 
-							exit(1);
-						}
-					}
-				}
-			}
->>>>>>> daef8e5571b60d38c273c743673a45b8ada1b9c8
 			for(unsigned long _i = 0; _i < T[T_inverse[R_index[i]]]; ++_i){
 				wait_one_unit;
 			}
 	
 			gettimeofday(&end, NULL);
-<<<<<<< HEAD
 			//printf("[Project1] %d, %s %.6f %.6f\n", getpid(), P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
 			//printf("%s\n", P[R_index[i]]);
-=======
-			#ifdef DEBUG
-			printf("[Project1] %d, %s %.6f %.6f\n", getpid(), P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
-			#endif 
-			printf("%s %d\n", P[R_index[i]], this_pid);
->>>>>>> daef8e5571b60d38c273c743673a45b8ada1b9c8
 			syscall(350, 0, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			exit(0);
 		}
 		else if(pid == -1){
-			#ifdef DEBUG
 			printf("Fork error!\n");
-			#endif 
 			exit(1);
 		}
 		else{
@@ -268,17 +205,11 @@ int main(){
 
 	// after all children have entered fifo, wait for the last on to terminate.
 	while(wait(NULL) > 0);
-<<<<<<< HEAD
 //printf("sched_getscheduler(0) = %d\n", sched_getscheduler(0));
 //printf("SCHED_OTHER = %d\n", SCHED_OTHER);
 	//assert(sched_getscheduler(0) == SCHED_OTHER);
 	
 	//printf("main terminated.\n");
-=======
-	#ifdef DEBUG
-	printf("main terminated.\n");
-	#endif 
->>>>>>> daef8e5571b60d38c273c743673a45b8ada1b9c8
 	exit(0);
 }
 
