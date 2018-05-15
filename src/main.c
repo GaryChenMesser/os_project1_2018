@@ -50,7 +50,9 @@ int main(){
 
 	// restrict the main process to execute on cpu 1
 	if(sched_setaffinity(0, sizeof(cpu_set_t), &mask1)){
+		#ifdef DEBUG
 		printf("sched_setaffinity error: %s\n", strerror(errno));
+		#endif 
 		exit(1);
 	}
 	
@@ -62,7 +64,9 @@ int main(){
 	// set once and all the child process will inherit the settings
 	if(S[0] == 'F' || S[0] == 'R'){
 		if(sched_setscheduler(0, policy(S[0]), &param)){
+			#ifdef DEBUG
 			printf("1 sched_setscheduler error: %s\n", strerror(errno));
+			#endif 
 			exit(1);
 		}
 	}
@@ -120,17 +124,20 @@ int main(){
 		if(!pid){
 			this_pid = getpid();
 			syscall(350, 1, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
-			//printf("%s %d\n", P[R_index[i]], getpid());
 			
 			// restrict all child processes to be executed on cpu 0
 			if(sched_setaffinity(0, sizeof(cpu_set_t), &mask)){
+				#ifdef DEBUG
 				printf("sched_setaffinity error: %s\n", strerror(errno));
+				#endif 
 				exit(1);
 			}
 			if(S[0] == 'S' || S[0] == 'P'){
 				if(empty){
 					if(sched_setscheduler(0, SCHED_FIFO, &param)){
+						#ifdef DEBUG
 						printf("policy: %d, sched_setscheduler error: %s\n", SCHED_FIFO, strerror(errno));
+						#endif 
 						exit(1);
 					}
 				}
@@ -139,17 +146,23 @@ int main(){
 						// need to add to fifo first, to avoid empty fifo ready queue,
 						// which will make idle start to run!
 						if(sched_setscheduler(0, SCHED_FIFO, &param)){
+							#ifdef DEBUG
 							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+							#endif 
 							exit(1);
 						}
 						if(sched_setscheduler(tmp1->pid, SCHED_IDLE, &param0)){
+							#ifdef DEBUG
 							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+							#endif 
 							exit(1);
 						}
           }
 					else{
 						if(sched_setscheduler(0, SCHED_IDLE, &param0)){
+							#ifdef DEBUG
 							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_IDLE, strerror(errno));
+							#endif 
 							exit(1);
 						}
 					}
@@ -160,13 +173,17 @@ int main(){
 			}
 	
 			gettimeofday(&end, NULL);
+			#ifdef DEBUG
 			printf("[Project1] %d, %s %.6f %.6f\n", getpid(), P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
-			//printf("%s\n", P[R_index[i]]);
+			#endif 
+			printf("%s %d\n", P[R_index[i]], this_pid);
 			syscall(350, 0, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			exit(0);
 		}
 		else if(pid == -1){
+			#ifdef DEBUG
 			printf("Fork error!\n");
+			#endif 
 			exit(1);
 		}
 		else{
@@ -183,8 +200,9 @@ int main(){
 	}
 	// after all children have entered fifo, wait for the last on to terminate.
 	while(wait(NULL) > 0);
-	
-	//printf("main terminated.\n");
+	#ifdef DEBUG
+	printf("main terminated.\n");
+	#endif 
 	exit(0);
 }
 
