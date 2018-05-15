@@ -88,6 +88,10 @@ I also write and design the system call, and spending hours try to figure out wh
 
 ### Kernel Scheduler
 
+At the beginning, we thouth we need to modify scheduler in kernel, because we didn't see "USER SPACE". We know the another class need to implement "weighted rr" policy in kernel, and they have a handout. We took a look how they implement new schedule policy in linux kernel version `2.6.x`. However, the current linux kernel is `4.17.x`, so the code is very different from `2.6` to `4.17`. Also, knowing how to do "weighted rr" is helpless, becuase `SJF` anf `PSJF` do not need slice time. They are more likely `FIFO`. Anyway, I was on the way to add new policies in kernel `4.17`. There are some works, such as [this](https://github.com/GaryChenMesser/os_project1_2018/pull/6/files) and [this](https://github.com/GaryChenMesser/os_project1_2018/pull/8/files). However I got the information that we need not modify the kernel. So, I didn't do the following work.
+
+TL;DR 白忙一場了 Orz
+
 ### System call
 
 To record the kernel time, at the beginning, we had tried to use `getnstimeofday()` for a long time, but it alway shows error while compiling. We have no idea and also open [a question on Stackover Flow](https://stackoverflow.com/questions/50349294/). We can't find solution. So, we change to use `ktime_get()`, which can compile. Just at the moment when I write the report now. I got the answer from Stackover Flow.
