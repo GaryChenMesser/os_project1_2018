@@ -7,41 +7,46 @@ Group 2
 - 劉安齊 @b05701204
 
 ## Design
-本排程器分別使用不同的policy組合實現不同的排程：
-* 使用SCHED_FIFO實現FIFO
-* 使用SCHED_FIFO搭配SCHED_IDLE完成RR, SJF和PSJF的實作。
 
-排程器(主程式、父行程)本身會單獨使用一顆cpu並使用SCHED_OTHER policy，以完成比較準確的時間單位計算並不被自己fork出來的子行程干擾。相對的，子行程共用另一顆CPU，目的是讓SCHED_FIFO和SCHED_RR可以實現真正的行為，不被類似pipeline的效果影響。
+本排程器分別使用不同的 policy 組合實現不同的排程：
+* 使用 `SCHED_FIFO` 實現 `FIFO`
+* 使用 `SCHED_FIFO` 搭配 `SCHED_IDLE` 完成 `RR`, `SJF` 和 `PSJF` 的實作。
 
-由於主程式和子行程的CPU和policy都不一樣，因此兩者不會出現在同一個ready queue上，且不會互卡CPU時間，因此可以達到接近平行化的效果，好處是可以直接在主程式和子行程跑計算時間的空迴圈，不會因為兩者同時跑導致時間伸縮。
+排程器(主程式、父行程)本身會單獨使用一顆 cpu 並使用 `SCHED_OTHER` policy，以完成比較準確的時間單位計算並不被自己 fork 出來的子行程干擾。相對的，子行程共用另一顆 CPU，目的是讓 `SCHED_FIFO` `和SCHED_RR` 可以實現真正的行為，不被類似 pipeline 的效果影響。
+
+由於主程式和子行程的 CPU 和 policy 都不一樣，因此兩者不會出現在同一個 ready queue 上，且不會互卡CPU時間，因此可以達到接近平行化的效果，好處是可以直接在主程式和子行程跑計算時間的空迴圈，不會因為兩者同時跑導致時間伸縮。
 
 ### Scheduler
 
 本排程器大致流程如下：
 #### FIFO
-* 主程式(父行程)
-  * 把需要被執行與排程的行程進行排序(開始時間早的排前面)
-  * 進入準備狀態
-  * 開始計算時間，每當有行程需要被fork，就fork該行程
-  * 直到所有子行程真正結束，本程式結束
-	
+
+- 主程式(父行程)
+  - 把需要被執行與排程的行程進行排序(開始時間早的排前面)
+  - 進入準備狀態
+  - 開始計算時間，每當有行程需要被fork，就fork該行程
+  - 直到所有子行程真正結束，本程式結束
+
 #### SJF(PSJF僅一處不同)
-主程式(父行程)
-* 把需要被執行與排程的行程進行排序(開始時間早的排前面，當開始時間一樣，會把結束時間早的排前面)。
-* 進入準備狀態
-* 開始計算時間
-  * 每當有行程需要被fork，就fork並把該子行程的資料丟入一個queue當中，並繼續算時間。
-  * 每當有行程到了”表定”的結束時間，就把queue的第一個元素拿掉，把剩餘元素中執行時間最短的放到queue的開頭(插隊)。
-* 直到所有子行程真正結束，本程式結束
-	
-子行程(子行程真正開始執行自己的任務前要做的routine)
-* 把CPU鎖到第二顆CPU上
-* 檢查繼承到的queue是否為空(檢查的部分為了避免多行程導致的臨界區問題，已在父行程檢查完畢，以下檢查只檢查存起來的flag)
-  * 為空
-    * 把自己的sched policy改成SCHED_FIFO
-  * 不為空
-    * 若是PSJF，且剩餘時間大於queue開頭的行程的剩餘時間，把自己的sched policy改成SCHED_FIFO
-    * 若否，把自己的sched policy改成SCHED_IDLE
+
+##### 主程式(父行程)
+
+- 把需要被執行與排程的行程進行排序(開始時間早的排前面，當開始時間一樣，會把結束時間早的排前面)。
+- 進入準備狀態
+- 開始計算時間
+  - 每當有行程需要被 fork，就 fork 並把該子行程的資料丟入一個 queue 當中，並繼續算時間。
+  - 每當有行程到了”表定”的結束時間，就把 queue 的第一個元素拿掉，把剩餘元素中執行時間最短的放到queue 的開頭(插隊)。
+- 直到所有子行程真正結束，本程式結束
+
+##### 子行程(子行程真正開始執行自己的任務前要做的routine)
+
+- 把 CPU 鎖到第二顆 CPU 上
+- 檢查繼承到的 queue 是否為空(檢查的部分為了避免多行程導致的臨界區問題，已在父行程檢查完畢，以下檢查只檢查存起來的 flag)
+  - 為空
+    - 把自己的 sched policy 改成 `SCHED_FIFO`
+  - 不為空
+    - 若是 `PSJF`，且剩餘時間大於 queue 開頭的行程的剩餘時間，把自己的 sched `policy改成SCHED_FIFO`
+    - 若否，把自己的 sched policy 改成 `SCHED_IDLE`
 
 ### System Call
 
@@ -119,7 +124,7 @@ Teaching group how to use Git and Github.
 
 ## Developing record 開發辛酸史
 
-### Kernel Scheduler
+### Kernel Space Scheduler
 
 At the beginning, we thouth we need to modify scheduler in kernel, because we didn't see "USER SPACE". We know the another class need to implement "weighted rr" policy in kernel, and they have a handout. We took a look how they implement new schedule policy in linux kernel version `2.6.x`. However, the current linux kernel is `4.17.x`, so the code is very different from `2.6` to `4.17`. Also, knowing how to do "weighted rr" is helpless, becuase `SJF` anf `PSJF` do not need slice time. They are more likely `FIFO`. Anyway, I was on the way to add new policies in kernel `4.17`. There are some works, such as [this](https://github.com/GaryChenMesser/os_project1_2018/pull/6/files) and [this](https://github.com/GaryChenMesser/os_project1_2018/pull/8/files). However I got the information that we need not modify the kernel, and then I didn't do the following work. If we want to continue do a kernel scheduler, just base on the PR #8 and modify `rt.c`.
 
@@ -144,7 +149,9 @@ asmlinkage int sys_my_time() {
 }
 ```
 
-and we finally know that the header should be:
+then Booooom! Error????
+
+We finally know that the header should be:
 
 ```c
 #include <linux/ktime.h>
@@ -153,4 +160,4 @@ and we finally know that the header should be:
 
 rather than `<linux/time.h>`.
 
-Since the version 3.17, the function has moved. There is no issue on the Internet, so we did a good job, opening a quesion on Stackover Flow. :)
+Since the version 3.17, the function has moved. There is no discussion on the Internet, so we did a good job, opening a quesion on Stackover Flow. :)
