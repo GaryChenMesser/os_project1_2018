@@ -117,11 +117,11 @@ int main(){
 			}
 		}
 		
+		syscall(350, 1, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 		pid = fork();
 		
 		if(!pid){
 			this_pid = getpid();
-			syscall(350, 1, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			printf("%s %d\n", P[R_index[i]], getpid());
 			
 			for(unsigned long _i = 0; _i < T[T_inverse[R_index[i]]]; ++_i){
