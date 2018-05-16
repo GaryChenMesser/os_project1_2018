@@ -86,7 +86,6 @@ int main(){
 	INIT_LIST_HEAD(&ready.list);
 	
 	for(; i < N; ++i){
-//printf("i = %d, P[R_index[i]] = %s\n", i, P[R_index[i]]);
 		int empty, preempt = 0;
 		int this_pid, flag = 0;
 		
@@ -118,12 +117,10 @@ int main(){
 			}
 		}
 		
-		gettimeofday(&start, NULL);
 		pid = fork();
 		
 		if(!pid){
 			this_pid = getpid();
-//printf("%d fork\n", this_pid);
 			syscall(350, 1, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			printf("%s %d\n", P[R_index[i]], getpid());
 			
@@ -131,9 +128,6 @@ int main(){
 				wait_one_unit;
 			}
 	
-			gettimeofday(&end, NULL);
-			//printf("[Project1] %d, %s %.6f %.6f\n", getpid(), P[R_index[i]], ((double)start.tv_sec + (double)start.tv_usec / (10^6)), ((double)end.tv_sec + (double)end.tv_usec / (10^6)));
-			//printf("%s\n", P[R_index[i]]);
 			syscall(350, 0, &start_n.tv_sec, &start_n.tv_nsec, &end_n.tv_sec, &end_n.tv_nsec, &this_pid);
 			exit(0);
 		}
@@ -150,7 +144,6 @@ int main(){
 				exit(1);
 			}
 			if(flag){
-//printf("set 3 %d\n", pid);
 				if(sched_setscheduler(pid, SCHED_FIFO, &param)){
 					printf("policy: %d, sched_setscheduler error: %s\n", SCHED_FIFO, strerror(errno));
 					exit(1);
@@ -159,19 +152,15 @@ int main(){
 			else{
 				if(S[0] == 'S' || S[0] == 'P'){
 					if(empty){
-	//printf("empty\n");
-	//printf("set 4 %d\n", pid);
 						if(sched_setscheduler(pid, SCHED_FIFO, &param)){
 							printf("policy: %d, sched_setscheduler error: %s\n", SCHED_FIFO, strerror(errno));
 							exit(1);
 						}
 					}
 					else{
-	//printf("preempt = %d\n", preempt);
 						if(S[0] == 'P' && preempt){
 							// need to add to fifo first, to avoid empty fifo ready queue,
 							// which will make idle start to run!
-	//printf("set 5 %d\n", pid);
 							if(sched_setscheduler(pid, SCHED_FIFO, &param)){
 								printf("policy: %d, sched_setscheduler error: %s\n", SCHED_FIFO, strerror(errno));
 								exit(1);
@@ -205,11 +194,7 @@ int main(){
 
 	// after all children have entered fifo, wait for the last on to terminate.
 	while(wait(NULL) > 0);
-//printf("sched_getscheduler(0) = %d\n", sched_getscheduler(0));
-//printf("SCHED_OTHER = %d\n", SCHED_OTHER);
-	//assert(sched_getscheduler(0) == SCHED_OTHER);
 	
-	//printf("main terminated.\n");
 	exit(0);
 }
 

@@ -96,7 +96,7 @@ syscall(350,                // System Call Number
 
 As you can see, there is `isStart` to determine whether it is beginning or ending. When it is beginning, it only records the start time. Otherwise, it records the end time, and call `printk` to print the information.
 
-To record time, we can use both `getnstimeofday()` or `ktime_get()`. The prevois one is system time in ns, and the second one is time after system boots. Since we only need to know the order and duration, we can use either one to get the precision in nanosecond. I choose `ktime_get()` at the end, I explain in "Developing record" part.
+To record time, we can use both `getnstimeofday()` or `ktime_get()`. The prevois one is system time in ns, and the second one is time after system boots. Since we only need to know the order and duration, we can use either one to get the precision in nanosecond.
 
 ### Simulator
 
@@ -122,7 +122,7 @@ Try three different scheduler architecture：
 
 - Use only one clock to record time, which need lots of shared address between processes and make life hard...
 - Let child fork child. The main function just have to wait for all children's termination. Fail because there is no direct way to no whether a grandchild is alive or not.
-- The last one, which is in ```main.c```.
+- The last one, which is in `main.c`.
 
 ### 鄧聿晰
 

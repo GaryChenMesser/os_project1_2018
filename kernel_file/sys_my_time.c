@@ -7,9 +7,6 @@ asmlinkage int sys_my_time(int isStart, unsigned long *start_sec,
                            unsigned long *start_nsec, unsigned long *end_sec,
                            unsigned long *end_nsec, int *pid) {
   struct timespec t;
-  //ktime_t currtime;
-
-  //currtime = ktime_get();
 
   getnstimeofday(&t);
 

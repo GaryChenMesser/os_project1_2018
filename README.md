@@ -1,6 +1,4 @@
 # OS Project 1 2018
-<<<<<<< HEAD
-=======
 
 薛智文 作業系統 2018 春
 
@@ -34,4 +32,3 @@ cd scr_test
 make
 ./a.out < FILE
 ```
->>>>>>> 1632a6f9fc8a2eeb90898c44f22066754cb9f0de
